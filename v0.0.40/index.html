@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Canvas Image Processing</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <script src="stats.js"></script>
+  <script>
+    // Mostrar panel de FPS con stats.js
+    const stats = new Stats()
+    stats.showPanel(0) // 0: FPS
+    document.body.appendChild(stats.dom)
+
+    function animateStats() {
+      stats.begin()
+      stats.end()
+      requestAnimationFrame(animateStats)
+    }
+    animateStats()
+
+    const c = document.getElementById("canvas")
+    const ctx = c.getContext("2d")
+
+    const hiddenCanvas = document.createElement("canvas")
+    const hiddenCTX = hiddenCanvas.getContext("2d")
+
+    const img = new Image()
+    img.src = "floor.jpg"
+
+    let imgData; // Variable global accesible desde setupScene()
+
+    img.onload = () => {
+      resizeCanvas()           // Prepara el canvas al cargar imagen
+      requestAnimationFrame(setupScene); // Inicia render loop
+    };
+
+    window.addEventListener("resize", () => {
+      resizeCanvas() // Redimensiona correctamente
+    });
+
+    function resizeCanvas() {
+      // Redimensionar canvas visible
+      c.width = window.innerWidth
+      c.height = window.innerHeight
+
+      // Redimensionar canvas oculto
+      hiddenCanvas.width = window.innerWidth
+      hiddenCanvas.height = window.innerHeight
+
+      // Dibujar imagen original en canvas oculto
+      hiddenCTX.drawImage(img, 0, 0, hiddenCanvas.width, hiddenCanvas.height)
+
+      // Obtener datos de píxeles
+      hiddenImgData = hiddenCTX.getImageData(0, 0, c.width, c.height)
+      imgData = hiddenCTX.createImageData(c.width, c.height)
+    }
+
+    function setupScene() {
+      requestAnimationFrame(setupScene)
+
+      stats.begin()
+
+      if (!imgData) return // Esperar si aún no está listo
+
+      let W2=hiddenImgData.width
+      let H2=hiddenImgData.height
+      let HCW=hiddenCanvas.width
+      let HCH=hiddenCanvas.height
+
+      // Procesar colores:
+      for (let i = 0; i <  hiddenImgData.data.length; i += 4) {
+        //variables fantasma.
+        //Hay que sumarlas, no multiplicarlas:
+
+        //Coordenadas:
+        //const x = (i / 4) % hiddenImgData.width;
+        //const y = Math.floor((i / 4) / hiddenImgData.width);
+
+        //Texturas aplicadas:
+        //const map_red   = hiddenImgData.data[i + 0];
+        //const map_green = hiddenImgData.data[i + 1];
+        //const map_blue  = hiddenImgData.data[i + 2];
+        //const map_alpha = hiddenImgData.data[i + 3];
+
+        //Variables reemplazadoras:
+        imgData.data[i + 0] = 0
+        imgData.data[i + 1] = Math.floor((i / 4) / W2)>HCH/2?hiddenImgData.data[i + 1]:0
+        imgData.data[i + 2] = 0
+        imgData.data[i + 3] = 255
+      }
+
+      // Dibujar en el canvas visible
+      ctx.putImageData(imgData, 0, 0)
+
+      stats.end()
+    }
+  </script>
+</body>
+</html>
